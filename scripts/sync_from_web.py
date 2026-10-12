@@ -40,6 +40,27 @@ EXERCISE_DATA = {
     13: ["emails.csv"],
 }
 EXERCISE_INTRO = "まず、演習で使うデータを準備します。"
+
+# 本文の入力の直前に置く補助セル（入力番号 → (説明, コード)）。
+# CIFAR-10 は元のサーバが遅いことがあるため、Web に置いたコピーを Keras のキャッシュに入れておく
+# （chapters/14.md の「ダウンロードに時間がかかる場合」と同じコード）。
+PRE_LISTING = {
+    "14.12": (
+        "CIFAR-10 のダウンロードには時間がかかることがあるため、先に本書の Web サイトに置いたコピーを取得しておきます。",
+        "# CIFAR-10 を本書の Web サイトから取得し、Keras のキャッシュに置く\n"
+        "import os\n"
+        "from urllib.request import urlopen\n"
+        "\n"
+        "cache = os.path.expanduser(\"~/.keras/datasets\")\n"
+        "os.makedirs(cache, exist_ok=True)\n"
+        "target = os.path.join(cache, \"cifar-10-batches-py-target_archive\")\n"
+        "if not os.path.exists(target):\n"
+        "    url = \"https://ml.kano.ac/chapters/data/cifar-10/cifar-10-python.tar.gz\"\n"
+        "    with open(target, \"wb\") as f:\n"
+        "        for part in (\".part1\", \".part2\"):  # 2 つに分けて置いてある\n"
+        "            f.write(urlopen(url + part).read())",
+    ),
+}
 DATA_MARKER = "# 演習で使うデータのダウンロード"
 
 
@@ -145,10 +166,28 @@ def apply_setup(cells, chapter):
     cells[1:1] = [new("markdown", SETUP_HEADING), new("code", code)]
 
 
+def apply_pre_listing(cells, chapter):
+    """Keep one helper (markdown + code) pair right before each PRE_LISTING input."""
+    for number, (intro, code) in PRE_LISTING.items():
+        if not number.startswith(f"{chapter}."):
+            continue
+        at = next(i for i, c in enumerate(cells) if source(c).startswith(f"**入力 {number}**"))
+        if at >= 2 and source(cells[at - 2]).strip() == intro and cells[at - 1]["cell_type"] == "code":
+            set_source(cells[at - 1], code)
+            continue
+        ids = [hashlib.sha256(f"pre:{number}:{k}".encode()).hexdigest()[:12] for k in ("md", "code")]
+        cells[at:at] = [
+            {"cell_type": "markdown", "id": ids[0], "metadata": {}, "source": intro.splitlines(keepends=True)},
+            {"cell_type": "code", "id": ids[1], "metadata": {}, "source": code.splitlines(keepends=True),
+             "execution_count": None, "outputs": []},
+        ]
+
+
 def synchronize(original, web, chapter):
     nb = copy.deepcopy(original)
     cells = nb["cells"]
     apply_setup(cells, chapter)
+    apply_pre_listing(cells, chapter)
     expected = listings((web / "docs" / "code" / f"{chapter}.md").read_text(encoding="utf-8"))
     seen = set()
     for index, cell in enumerate(cells):
