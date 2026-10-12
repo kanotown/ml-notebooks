@@ -24,4 +24,22 @@
 | 14. 深層学習の基礎と活用 | [chapter14.ipynb](https://colab.research.google.com/github/kanotown/ml-notebooks/blob/main/chapter14.ipynb) |
 | 15. 機械学習アプリの作り方 | [chapter15.ipynb](https://colab.research.google.com/github/kanotown/ml-notebooks/blob/main/chapter15.ipynb) |
 
-※ このリポジトリのノートブックは書籍ソースから自動生成されています。直接の編集は次回生成時に上書きされます。
+本文コード・演習は、校正を反映した `ml-web` を基準に同期します。最新版のTeX原稿が手元にないため、旧TeXからの再生成は行いません。
+
+隣のディレクトリに `ml-web` を置き、このリポジトリで次を実行してください。
+
+```powershell
+python scripts/sync_from_web.py          # 第1〜14章を同期
+python scripts/sync_from_web.py 5 6 13  # 指定章だけ同期
+python scripts/sync_from_web.py --check  # 差分確認のみ（不一致なら終了コード1）
+```
+
+- 本文コード・入力キャプション：`ml-web/docs/code/N.md`
+- 演習問題・テンプレート：`ml-web/docs/chapters/N.md`
+- 解答例：`ml-web/includes/solutions/N-*.md`（ノートブックからリンク）
+
+入力番号を保ったまま同期し、既存の節見出し・セルID・メタデータを維持します。変更したコードセルの出力は消去します。第15章の付録は別途手作業で保守します。
+
+Colab で上から実行できるよう、各ノートブックのタイトルの直後に「準備」セル（日本語フォントの matplotlib-fontja、第13章は MeCab など）を、第11・13章は「演習問題」の直後に演習用データのダウンロードセルを置きます。どちらも `scripts/sync_from_web.py` の `SETUP`・`EXERCISE_DATA` で章ごとに設定しています。
+
+旧原稿側の `generate_web_code.py` / `generate_notebooks.py` を実行すると、校正後のWebコード・ノートブックを上書きするため使用しないでください。
